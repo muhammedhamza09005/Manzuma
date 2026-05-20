@@ -1,0 +1,8 @@
+[flake8]
+exclude = .git, .ipynb_checkpoints, migrations, env, venv, .venv
+max-line-length = 130
+; Ignore specific rules:
+; F403 = 'from module import *' used (often in settings/__init__.py)
+; F405 = name may be undefined from star imports
+; E501 = line too long (if you prefer Black to handle it)
+ignore = F403, F405, W503, E203, E226, E402

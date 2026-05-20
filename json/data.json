@@ -1,0 +1,50 @@
+[
+    {
+        "serial-numbers": [
+            1001
+        ],
+        "imported": 10.0,
+        "in-stock": 9.0,
+        "name": "test",
+        "purchase-price": 1.0,
+        "sell-price": 1.25,
+        "total-price": 10.0,
+        "stock-difference": -1.0
+    },
+    {
+        "serial-numbers": [
+            1002
+        ],
+        "imported": 10.0,
+        "in-stock": 11.0,
+        "name": "test 2",
+        "purchase-price": 1.0,
+        "sell-price": 1.25,
+        "total-price": 10.0,
+        "stock-difference": 1.0
+    },
+    {
+        "serial-numbers": [
+            1003
+        ],
+        "imported": 0.0,
+        "in-stock": 10.0,
+        "name": "test 3",
+        "purchase-price": 1.0,
+        "sell-price": 1.25,
+        "total-price": 0.0,
+        "stock-difference": 10.0
+    },
+    {
+        "serial-numbers": [
+            100344
+        ],
+        "imported": 10.0,
+        "in-stock": 0.0,
+        "name": "test 4",
+        "purchase-price": 1.0,
+        "sell-price": 1.25,
+        "total-price": 10.0,
+        "stock-difference": -10.0
+    }
+]

@@ -1,0 +1,14 @@
+[
+    {
+        "serial-numbers": [
+            1002
+        ],
+        "imported": 10.0,
+        "in-stock": 11.0,
+        "name": "test 2",
+        "purchase-price": 1.0,
+        "sell-price": 1.25,
+        "total-price": 10.0,
+        "stock-difference": 1.0
+    }
+]
