@@ -1,7 +1,7 @@
 import functions as fs
 
 
-class Main:
+class CalculateProfit:
     def __init__(
         self,
         profit: int = int(),
@@ -17,7 +17,7 @@ class Main:
 
 
 # Main function
-def main(profit: int, devide: float, purchase_price: float = float()) -> float | None:
+def calculate_profit(profit: int, devide: float, purchase_price: float = float()) -> float | None:
     if not purchase_price:
         fs.clear_terminal()
     while True:
@@ -35,4 +35,4 @@ def main(profit: int, devide: float, purchase_price: float = float()) -> float |
 
 
 if __name__ == "__main__":
-    main(10, 0.25)
+    calculate_profit(10, 0.25)

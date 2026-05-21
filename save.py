@@ -3,17 +3,17 @@ from pprint import pprint
 import functions as fs
 
 
-class Main:
+class Save:
     def __init__(self):
         self.data = fs.load_data()
         self.kill_process = True
 
     # Main function
-    def main(self):
+    def save(self):
         fs.clear_terminal()
 
 
-def main(data: list[dict]) -> list[dict]:
+def save(data: list[dict]) -> list[dict]:
     temp_dict = None
     while True:
         str_or_float = fs.get_str_or_float('Name / Serial Number')
@@ -85,4 +85,4 @@ if __name__ == "__main__":
     while True:
         data = fs.load_data()
         fs.dump_stock_difference(data)
-        fs.dump_data(main(data))
+        fs.dump_data(save(data))

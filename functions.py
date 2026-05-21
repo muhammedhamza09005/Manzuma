@@ -17,7 +17,7 @@ def validate_date(_input: str) -> datetime.date | None:
     if _input is None:
         return
 
-    DATE_SEP = r"[-/ _]"
+    DATE_SEP = r"[-/ _\\]"
     pattern = re.compile(
         rf"""
         \s*
@@ -145,12 +145,12 @@ def get_str_or_float(name: str = str(), allow_blink: bool = False) -> str | floa
             print('Error', e)
 
 
-def load_data(file_path: str = "json/data.json"):
+def load_data(file_path: str = "data/data.json"):
     with open(file_path, 'r') as file_path:
         return json.load(file_path)
 
 
-def dump_data(data, file_path: str = "json/data.json") -> bool:
+def dump_data(data, file_path: str = "data/data.json") -> bool:
     try:
         if not Path(file_path).exists():
             Path(file_path).write_text(json.dumps({}, indent=4))
@@ -203,39 +203,43 @@ def dump_stock_difference(data: list[dict]):
     except KeyError as e:
         print('Error', e)
 
+    print("--- \nNumber of stock difference ---")
+
     # stock difference plus
-    len_old_stock_difference_plus = len(load_data("json/stock_difference/stock_difference_plus.json"))
-    print('\nNumber of stock difference plus:', len_old_stock_difference_plus)
+    len_old_stock_difference_plus = len(load_data("data/stock_difference/stock_difference_plus.json"))
+    print('Plus:', len_old_stock_difference_plus)
     if len(stock_difference_plus) != len_old_stock_difference_plus:
         print('New number of stock difference plus:', len(stock_difference_plus))
         dump_data(stock_difference_plus, 'json/stock_difference/stock_difference_plus.json')
 
     # stock difference minus
-    len_old_stock_difference_minus = len(load_data("json/stock_difference/stock_difference_minus.json"))
-    print('Number of stock difference minus:', len_old_stock_difference_minus)
+    len_old_stock_difference_minus = len(load_data("data/stock_difference/stock_difference_minus.json"))
+    print('Minus:', len_old_stock_difference_minus)
     if len(stock_difference_minus) != len_old_stock_difference_minus:
         print('New number of stock difference minus:', len(stock_difference_minus))
         dump_data(stock_difference_minus, 'json/stock_difference/stock_difference_minus.json')
 
     # zero imported stock
-    len_old_zero_imported_stock = len(load_data("json/stock_difference/zero_imported_stock.json"))
-    print('\nNumber of zero imported stock:', len_old_zero_imported_stock)
+    len_old_zero_imported_stock = len(load_data("data/stock_difference/zero_imported_stock.json"))
+    print('Zero imported stock:', len_old_zero_imported_stock)
     if len(zero_imported_stock) != len_old_zero_imported_stock:
         print('New number of zero imported stock:', len(zero_imported_stock))
         dump_data(zero_imported_stock, 'json/stock_difference/zero_imported_stock.json')
 
     # zero in stock
-    len_old_zero_in_stock = len(load_data("json/stock_difference/zero_in_stock.json"))
-    print('\nNumber of zero in stock:', len_old_zero_in_stock)
+    len_old_zero_in_stock = len(load_data("data/stock_difference/zero_in_stock.json"))
+    print('Zero in stock:', len_old_zero_in_stock)
     if len(zero_in_stock) != len_old_zero_in_stock:
         print('New number of zero in stock:', len(zero_in_stock))
         dump_data(zero_in_stock, 'json/stock_difference/zero_in_stock.json')
+
+    print("---\n")
 
 
 def add_new_serial_number(data, _dict: dict) -> bool:
     added_new_serial_number = False
     while True:
-        new_serial_number = get_float('Add/Remove a Serial Number?', True)
+        new_serial_number = get_float('Add/Remove a Serial Number? (no)', True)
         if new_serial_number:
             if new_serial_number < 0:
                 if int(new_serial_number) * -1 in _dict['serial-numbers']:

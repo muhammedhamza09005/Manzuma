@@ -3,7 +3,7 @@ from pprint import pprint
 import functions as fs
 
 
-def main() -> list[dict]:
+def search() -> list[dict]:
     while True:
         data = fs.load_data()
         str_or_float = fs.get_str_or_float('Name / Serial Number')
@@ -18,4 +18,4 @@ def main() -> list[dict]:
 if __name__ == "__main__":
     fs.clear_terminal()
     while True:
-        main()
+        search()

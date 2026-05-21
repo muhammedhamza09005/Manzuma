@@ -3,14 +3,15 @@ from pathlib import Path
 from pprint import pprint
 
 import functions as fs
-from calculate_profit import main as profit
+from calculate_profit import calculate_profit
 
 
-def main():
-    fs.clear_terminal()
+def purchases():
     data = fs.load_data()
+    fs.dump_stock_difference(data)
+    fs.clear_terminal()
     supplier = str(fs.get_str("Supplier"))
-    folder_path = Path("json/purchases")
+    folder_path = Path("data/purchases")
     invoice_number = sum(1 for f in folder_path.iterdir() if f.is_file()) + 1
     today = date.today().isoformat()  # convert to ISO string
     _date = fs.validate_date(fs.get_str(f"Date ({today})", True))
@@ -31,27 +32,27 @@ def main():
         imported = fs.get_float('imported')
         in_stock = fs.get_float('In-Stock')
         purchase_price = fs.get_float('Purchase Price')
-        profit_sell_price = profit(10, 0.25, purchase_price)
-        sell_price = fs.get_float(f'Sell Price ({purchase_price} -> {profit_sell_price})', True)
+        profit = calculate_profit(10, 0.25, purchase_price)
+        sell_price = fs.get_float(f'Sell Price ({purchase_price} -> {profit})', True)
         item = {
             'serial-numbers': [int(fs.get_float("Serial Number"))],
             'imported': imported,
             'in-stock': in_stock,
             'name': name,
             'purchase-price': purchase_price,
-            'sell-price': sell_price or profit_sell_price,
+            'sell-price': sell_price or profit,
             'total-price': purchase_price * imported,
             'stock-difference': in_stock - imported,
         }
         data.append(item)
         fs.add_new_serial_number(data, item)
         invoice['items'].append(item)
-    fs.dump_stock_difference(data)
     fs.clear_terminal()
+    fs.dump_stock_difference(data)
     pprint(invoice)
     fs.dump_data(invoice, f"{folder_path}/{invoice_number}.json")
     fs.dump_data(data)
 
 
 if __name__ == "__main__":
-    main()
+    purchases()
