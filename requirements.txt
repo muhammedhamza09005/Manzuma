@@ -1,0 +1,4 @@
+ipython
+isort
+black
+flake8

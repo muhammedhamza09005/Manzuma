@@ -3,10 +3,11 @@ import json
 import math
 import os
 import re
+from datetime import date
 from pathlib import Path
 from pprint import pprint
+
 from calculate_profit import calculate_profit
-from datetime import date
 
 
 def validate_date(_input: str) -> datetime.date | None:
@@ -305,7 +306,9 @@ def update_item(data: list[dict], item: dict) -> dict:
     in_stock = get_float(f'In-Stock Items ({imported})', True) or imported
     purchase_pack_price = None
     if pack is not None:
-        purchase_pack_price = get_float(f'Purchase pack Price ({item['purchase-pack-price']})', True) or item['purchase-pack-price']
+        purchase_pack_price = (
+            get_float(f'Purchase pack Price ({item['purchase-pack-price']})', True) or item['purchase-pack-price']
+        )
         purchase_price = purchase_pack_price / pack
     else:
         purchase_price = get_float(f'Purchase Price ({item['purchase-price']})', True) or item['purchase-price']
@@ -328,7 +331,11 @@ def update_item(data: list[dict], item: dict) -> dict:
         'purchase-price': purchase_price,
         'sell-price': sell_price,
         'sell-pack-price': sell_pack_price,
-        'total-price': (purchase_pack_price * imported_packs) if (imported_packs and purchase_pack_price) else (purchase_price * imported),
+        'total-price': (
+            (purchase_pack_price * imported_packs)
+            if (imported_packs and purchase_pack_price)
+            else (purchase_price * imported)
+        ),
         'stock-difference': in_stock - imported,
     }
     _data = list()
