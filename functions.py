@@ -5,6 +5,8 @@ import os
 import re
 from pathlib import Path
 from pprint import pprint
+from calculate_profit import calculate_profit
+from datetime import date
 
 
 def validate_date(_input: str) -> datetime.date | None:
@@ -146,7 +148,7 @@ def get_str_or_float(name: str = str(), allow_blink: bool = False) -> str | floa
 
 
 def load_data(file_path: str = "data/data.json"):
-    with open(file_path, 'r') as file_path:
+    with open(file_path, 'r', encoding="utf-8") as file_path:
         return json.load(file_path)
 
 
@@ -162,30 +164,29 @@ def dump_data(data, file_path: str = "data/data.json") -> bool:
         return False
 
 
-def get_data(data: list[dict], serial_number: int = int, name: str = str()) -> list[dict] | str:
+def get_data(data: list[dict], serial_number: int = int, name: str = str()) -> list[dict]:
     ret_list = list()
     try:
         for _dict in data:
             if serial_number and serial_number in _dict['serial-numbers']:
-                ret_list.append(_dict)
+                return [_dict]
             if name and (
                 name.lower() in _dict['name'].lower().split()
                 or name.lower() == _dict['name'].lower()
                 or name.lower() in _dict['name'].lower()
             ):
                 ret_list.append(_dict)
-        if ret_list:
-            return ret_list
-        raise KeyError('No match')
+        return ret_list
     except KeyError as e:
-        return f'Error {e}'
+        print(f'Error {e}')
+        return ret_list
 
 
 def dump_stock_difference(data: list[dict]):
     stock_difference_minus, stock_difference_plus, zero_imported_stock, zero_in_stock = (list() for _ in range(4))
 
-    try:
-        for _dict in data:
+    for _dict in data:
+        try:
             if not _dict['stock-difference']:
                 continue
             # zero imported stock
@@ -200,10 +201,10 @@ def dump_stock_difference(data: list[dict]):
             # stock difference minus
             elif _dict['stock-difference'] < 0:
                 stock_difference_minus.append(_dict)
-    except KeyError as e:
-        print('Error', e)
+        except KeyError as e:
+            print('Error', e)
 
-    print("--- \nNumber of stock difference ---")
+    print("\n--- Number of stock difference ---")
 
     # stock difference plus
     len_old_stock_difference_plus = len(load_data("data/stock_difference/stock_difference_plus.json"))
@@ -253,3 +254,104 @@ def add_new_serial_number(data, _dict: dict) -> bool:
         pprint(_dict)
         return True
     return False
+
+
+def add_new_item(data: list[dict], serial_number: int) -> dict:
+    name = get_str('Item Name')
+    pack = get_float('Pack (no pack)', True)
+    imported_packs = None
+    if pack is not None:
+        imported_packs = get_float('Imported Packs')
+        imported = imported_packs * pack
+    else:
+        imported = get_float('Imported Items')
+    in_stock = get_float(f'In-Stock Items ({imported})', True) or imported
+    if pack is not None:
+        purchase_pack_price = get_float('Purchase pack Price')
+        purchase_price = purchase_pack_price / pack
+    else:
+        purchase_price = get_float('Purchase Price')
+    profit = calculate_profit(10, 0.25, purchase_price)
+    sell_price = get_float(f'Sell Price ({purchase_price} -> {profit})', True) or profit
+    pack_profit = calculate_profit(10, 0.25, purchase_pack_price)
+    sell_pack_price = get_float(f'Sell Pack Price ({purchase_pack_price} -> {pack_profit})', True) or pack_profit
+    item = {
+        'serial-numbers': [serial_number],
+        'name': name,
+        'pack': pack,
+        'imported-items': imported,
+        'imported-packs': imported_packs,
+        'in-stock': in_stock,
+        'purchase-pack-price': purchase_pack_price,
+        'purchase-price': purchase_price,
+        'sell-price': sell_price,
+        'sell-pack-price': sell_pack_price,
+        'total-price': purchase_price * imported,
+        'stock-difference': in_stock - imported,
+    }
+    data.append(item)
+    add_new_serial_number(data, item)
+    return item
+
+
+def update_item(data: list[dict], item: dict) -> dict:
+    pack = item['pack']
+    imported_packs = None
+    if pack is not None:
+        imported_packs = get_float('Imported Packs')
+        imported = imported_packs * pack
+    else:
+        imported = get_float('Imported Items')
+    in_stock = get_float(f'In-Stock Items ({imported})', True) or imported
+    purchase_pack_price = None
+    if pack is not None:
+        purchase_pack_price = get_float(f'Purchase pack Price ({item['purchase-pack-price']})', True) or item['purchase-pack-price']
+        purchase_price = purchase_pack_price / pack
+    else:
+        purchase_price = get_float(f'Purchase Price ({item['purchase-price']})', True) or item['purchase-price']
+    if purchase_price != item['purchase-price']:
+        profit = calculate_profit(10, 0.25, purchase_price)
+        sell_price = get_float(f'Sell Price ({purchase_price} -> {profit})', True) or profit
+        pack_profit = calculate_profit(10, 0.25, purchase_pack_price)
+        sell_pack_price = get_float(f'Sell Pack Price ({purchase_pack_price} -> {pack_profit})', True) or pack_profit
+    else:
+        sell_price = get_float(f'Sell Price ({item['sell-price']})', True) or item['sell-price']
+        sell_pack_price = get_float(f'Sell Pack Price ({item['sell-pack-price']})', True) or item['sell-pack-price']
+    _item = {
+        'serial-numbers': item['serial-numbers'],
+        'name': item['name'],
+        'pack': pack,
+        'imported-items': imported,
+        'imported-packs': imported_packs,
+        'in-stock': in_stock,
+        'purchase-pack-price': purchase_pack_price,
+        'purchase-price': purchase_price,
+        'sell-price': sell_price,
+        'sell-pack-price': sell_pack_price,
+        'total-price': (purchase_pack_price * imported_packs) if (imported_packs and purchase_pack_price) else (purchase_price * imported),
+        'stock-difference': in_stock - imported,
+    }
+    _data = list()
+    for _dict in load_data():
+        if _item['serial-numbers'][0] not in _dict['serial-numbers']:
+            _data.append(_dict)
+    _data.append(_item)
+    data = _data
+    add_new_serial_number(data, _item)
+    return _item
+
+
+def add_new_invoice(cache: dict, supplier_invoice_number: int) -> dict:
+    supplier = str(get_str("Supplier"))
+    invoice_number = cache["last-purchase-inovace-number"] + 1
+    cache["last-purchase-inovace-number"] += 1
+    cache["supplier-invoice-numbers"].append(supplier_invoice_number)
+    dump_data(cache, Path("data/cache.json"))
+    today = date.today().isoformat()  # convert to ISO string
+    return {
+        "supplier": supplier,
+        "date": str(validate_date(get_str(f"Inovace Date ({today})", True)) or today),
+        "invoice-number": invoice_number,
+        "supplier-invoice-number": supplier_invoice_number,
+        "items": list(),
+    }
