@@ -1,7 +1,5 @@
 {
-    "last-purchase-inovace-number": 1,
-    "last-barcode-number": 90058214,
-    "supplier-invoice-numbers": [
-        1380
-    ]
+    "last-purchase-inovace-number": 0,
+    "last-barcode-number": 90058210,
+    "supplier-invoice-numbers": []
 }

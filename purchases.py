@@ -33,17 +33,32 @@ def purchases():
         if not serial_number:
             serial_number = cache["last-barcode-number"] + 1
             cache["last-barcode-number"] += 1
-            fs.dump_data(cache, Path("data/cache.json"))
         items = fs.get_data(data, serial_number)
+        item_in_invoice = False
         if items:
-            item = fs.update_item(data, items[0])
+            item = None
+            for _item in invoice['items']:
+                if _item["serial-numbers"][0] in items[0]["serial-numbers"]:
+                    item = fs.add_to_item(data, _item)
+                    item_in_invoice = True
+                    break
+            if not item:
+                item = fs.update_item(data, items[0])
         else:
             item = fs.add_new_item(data, serial_number)
-        invoice['items'].append(item)
+        if item_in_invoice:
+            for _dict in invoice['items']:
+                if item['serial-numbers'][0] in _dict['serial-numbers']:
+                    invoice['items'].remove(_dict)
+                    invoice['items'].append(item)
+                    break
+        else:
+            invoice['items'].append(item)
     fs.clear_terminal()
     fs.dump_stock_difference(data)
     pprint(invoice)
     invoice_path = f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']}.json"
+    fs.dump_data(cache, Path("data/cache.json"))
     fs.dump_data(invoice, invoice_path)
     fs.dump_data(data)
 

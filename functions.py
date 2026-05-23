@@ -348,12 +348,50 @@ def update_item(data: list[dict], item: dict) -> dict:
     return _item
 
 
+def add_to_item(data: list[dict], item: dict) -> dict:
+    pack = item['pack']
+    imported_packs = None
+    if pack is not None:
+        imported_packs = get_float('Imported Packs')
+        imported = imported_packs * pack
+    else:
+        imported = get_float('Imported Items')
+    in_stock = (get_float(f'In-Stock Items ({imported})', True) or imported) + item["in-stock"]
+    if imported_packs:
+        imported_packs += item["imported-packs"]
+    imported += item["imported-items"]
+    _item = {
+        'serial-numbers': item['serial-numbers'],
+        'name': item['name'],
+        'pack': pack,
+        'imported-items': imported,
+        'imported-packs': imported_packs,
+        'in-stock': in_stock,
+        'purchase-pack-price': item["purchase-pack-price"],
+        'purchase-price': item['purchase-price'],
+        'sell-price': item["sell-price"],
+        'sell-pack-price': item["sell-pack-price"],
+        'total-price': (
+            (item["purchase-pack-price"] * imported_packs)
+            if (imported_packs and item["purchase-pack-price"])
+            else (item['purchase-price'] * imported)
+        ),
+        'stock-difference': in_stock - imported,
+    }
+    for _dict in data:
+        if _item['serial-numbers'][0] in _dict['serial-numbers']:
+            data.remove(_dict)
+            data.append(_item)
+            break
+    add_new_serial_number(data, _item)
+    return _item
+
+
 def add_new_invoice(cache: dict, supplier_invoice_number: int) -> dict:
     supplier = str(get_str("Supplier"))
     invoice_number = cache["last-purchase-inovace-number"] + 1
     cache["last-purchase-inovace-number"] += 1
     cache["supplier-invoice-numbers"].append(supplier_invoice_number)
-    dump_data(cache, Path("data/cache.json"))
     today = date.today().isoformat()  # convert to ISO string
     return {
         "supplier": supplier,
