@@ -19,7 +19,7 @@ def save(data: list[dict]) -> list[dict]:
         str_or_float = fs.get_str_or_float('Name / Serial Number')
         fs.clear_terminal()
         if type(str_or_float) is str:
-            _data = fs.get_data(data, name=str_or_float)
+            _data = fs.get_items(data, name=str_or_float)
             if type(_data) is list and len(_data) == 1:
                 temp_dict = _data[0]
                 serial_number = _data[0]['serial-numbers'][0]
@@ -30,7 +30,7 @@ def save(data: list[dict]) -> list[dict]:
             serial_number = int(str_or_float)
             break
     fs.clear_terminal()
-    pprint(fs.get_data(data, serial_number))
+    pprint(fs.get_items(data, serial_number))
     is_found = False
     for _dict in data:
         try:

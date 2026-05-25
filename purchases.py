@@ -4,64 +4,79 @@ from pprint import pprint
 import functions as fs
 
 
-def purchases():
-    data = fs.load_data()
-    cache = fs.load_data(Path("data/cache.json"))
-    fs.dump_stock_difference(data)
+def purchases() -> dict | None:
+    # init purchases
     fs.clear_terminal()
-    supplier_invoice_number = int(fs.get_float("Supplier Invoice Number"))
+    print(f"Loding purchases...")
+    items = fs.load_data()
+    cache = fs.load_data(Path("data/cache.json"))
     purchases_path = Path("data/purchases")
-    if supplier_invoice_number in cache["supplier-invoice-numbers"]:
-        invoice = None
-        for invoice_path in purchases_path.iterdir():
-            if invoice_path.is_file():
-                _invoice = fs.load_data(invoice_path)
-                if supplier_invoice_number == _invoice["supplier-invoice-number"]:
-                    invoice = _invoice
-                    break
-    else:
-        invoice = fs.add_new_invoice(cache, supplier_invoice_number)
+    fs.clear_terminal()
+    print(f"--- Purchases ---\n")
+
+    # get invoice
+    invoice = fs.get_invoice(cache, purchases_path)
     if not invoice:
+        print('purchases error: not invoice')
         return
-    # items
+
+    # add invoice items
     while True:
         if invoice['items']:
             fs.clear_terminal()
             if not fs.get_str_or_float("Add a new item? (no)", True):
                 break
-        serial_number = int(fs.get_float("Serial Number (*)", True) or int())
-        if not serial_number:
-            serial_number = cache["last-barcode-number"] + 1
-            cache["last-barcode-number"] += 1
-        items = fs.get_data(data, serial_number)
-        item_in_invoice = False
-        if items:
-            item = None
+
+        # get item
+        while True:
+            item, status = fs.get_item(items, cache)
+            if item:
+                break
+
+        if status == "get":
+            item_in_invoice = False
             for _item in invoice['items']:
-                if _item["serial-numbers"][0] in items[0]["serial-numbers"]:
-                    item = fs.add_to_item(data, _item)
+                if _item["serial-numbers"][0] in item["serial-numbers"]:
+                    item = fs.add_to_item(items, _item)
+                    invoice['items'].remove(_item)
+                    invoice['items'].append(item)
                     item_in_invoice = True
                     break
-            if not item:
-                item = fs.update_item(data, items[0])
-        else:
-            item = fs.add_new_item(data, serial_number)
-        if item_in_invoice:
-            for _dict in invoice['items']:
-                if item['serial-numbers'][0] in _dict['serial-numbers']:
-                    invoice['items'].remove(_dict)
-                    invoice['items'].append(item)
-                    break
+            if not item_in_invoice:
+                item = fs.update_item(items, item)
+                invoice['items'].append(item)
         else:
             invoice['items'].append(item)
+
+    # Save items
     fs.clear_terminal()
-    fs.dump_stock_difference(data)
-    pprint(invoice)
-    invoice_path = f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']}.json"
-    fs.dump_data(cache, Path("data/cache.json"))
-    fs.dump_data(invoice, invoice_path)
-    fs.dump_data(data)
+    print(f"Saving items...")
+    saved_all = True
+    if fs.dump_data(cache, Path("data/cache.json")):
+        print("cache -> OK")
+    else:
+        saved_all = False
+    if fs.dump_data(invoice, f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']}.json"):
+        print("invoice -> OK")
+    else:
+        saved_all = False
+    items = fs.merge_purchases_items()
+    if fs.dump_data(items):
+        print("items -> OK")
+    else:
+        saved_all = False
+    if fs.dump_stock_difference(items):
+        print("stock_difference -> OK")
+    else:
+        saved_all = False
+    if saved_all:
+        fs.clear_terminal()
+
+    return invoice
 
 
 if __name__ == "__main__":
-    purchases()
+    while True:
+        invoice = purchases()
+        if invoice:
+            pprint(invoice)

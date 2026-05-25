@@ -113,7 +113,7 @@ def get_float(name: str = str(), allow_blink: bool = False) -> float | None:
                 return
             return float(_input)
         except Exception as e:
-            print('Error', e)
+            print('Error:', e)
 
 
 def get_str(name: str = str(), allow_blink: bool = False) -> str | None:
@@ -128,13 +128,13 @@ def get_str(name: str = str(), allow_blink: bool = False) -> str | None:
                 return
             return _input
         except Exception as e:
-            print('Error', e)
+            print('Error:', e)
 
 
 def get_str_or_float(name: str = str(), allow_blink: bool = False) -> str | float | None:
     while True:
+        _input = input(f'({name}) >>> ').strip()
         try:
-            _input = input(f'({name}) >>> ').strip()
             if not _input:
                 if allow_blink:
                     return
@@ -145,15 +145,15 @@ def get_str_or_float(name: str = str(), allow_blink: bool = False) -> str | floa
         except ValueError:
             return _input
         except Exception as e:
-            print('Error', e)
+            print('Error:', e)
 
 
-def load_data(file_path: str = "data/data.json"):
+def load_data(file_path: Path | str = "data/items.json"):
     with open(file_path, 'r', encoding="utf-8") as file_path:
         return json.load(file_path)
 
 
-def dump_data(data, file_path: str = "data/data.json") -> bool:
+def dump_data(data, file_path: Path | str = "data/items.json") -> bool:
     try:
         if not Path(file_path).exists():
             Path(file_path).write_text(json.dumps({}, indent=4))
@@ -161,11 +161,11 @@ def dump_data(data, file_path: str = "data/data.json") -> bool:
             json.dump(data, f, indent=4, ensure_ascii=False)
             return True
     except Exception as e:
-        print('Error', e)
+        print('Error:', e)
         return False
 
 
-def get_data(data: list[dict], serial_number: int = int, name: str = str()) -> list[dict]:
+def get_items(data: list[dict], serial_number: int = int, name: str = str()) -> list[dict]:
     ret_list = list()
     try:
         for _dict in data:
@@ -183,7 +183,7 @@ def get_data(data: list[dict], serial_number: int = int, name: str = str()) -> l
         return ret_list
 
 
-def dump_stock_difference(data: list[dict]):
+def dump_stock_difference(data: list[dict]) -> bool:
     stock_difference_minus, stock_difference_plus, zero_imported_stock, zero_in_stock = (list() for _ in range(4))
 
     for _dict in data:
@@ -203,7 +203,8 @@ def dump_stock_difference(data: list[dict]):
             elif _dict['stock-difference'] < 0:
                 stock_difference_minus.append(_dict)
         except KeyError as e:
-            print('Error', e)
+            print('stock difference error:', e)
+            return False
 
     print("\n--- Number of stock difference ---")
 
@@ -235,7 +236,8 @@ def dump_stock_difference(data: list[dict]):
         print('New number of zero in stock:', len(zero_in_stock))
         dump_data(zero_in_stock, 'json/stock_difference/zero_in_stock.json')
 
-    print("---\n")
+    print("--- stock difference ---\n")
+    return True
 
 
 def add_new_serial_number(data, _dict: dict) -> bool:
@@ -246,7 +248,7 @@ def add_new_serial_number(data, _dict: dict) -> bool:
             if new_serial_number < 0:
                 if int(new_serial_number) * -1 in _dict['serial-numbers']:
                     _dict['serial-numbers'].remove(int(new_serial_number) * -1)
-            elif new_serial_number not in _dict['serial-numbers'] and type(get_data(data, new_serial_number)) is str:
+            elif new_serial_number not in _dict['serial-numbers'] and type(get_items(data, new_serial_number)) is str:
                 _dict['serial-numbers'].append(int(new_serial_number))
             added_new_serial_number = True
         else:
@@ -267,6 +269,7 @@ def add_new_item(data: list[dict], serial_number: int) -> dict:
     else:
         imported = get_float('Imported Items')
     in_stock = get_float(f'In-Stock Items ({imported})', True) or imported
+    purchase_pack_price = None
     if pack is not None:
         purchase_pack_price = get_float('Purchase pack Price')
         purchase_price = purchase_pack_price / pack
@@ -274,8 +277,10 @@ def add_new_item(data: list[dict], serial_number: int) -> dict:
         purchase_price = get_float('Purchase Price')
     profit = calculate_profit(10, 0.25, purchase_price)
     sell_price = get_float(f'Sell Price ({purchase_price} -> {profit})', True) or profit
-    pack_profit = calculate_profit(10, 0.25, purchase_pack_price)
-    sell_pack_price = get_float(f'Sell Pack Price ({purchase_pack_price} -> {pack_profit})', True) or pack_profit
+    sell_pack_price = None
+    if purchase_pack_price:
+        pack_profit = calculate_profit(10, 0.25, purchase_pack_price)
+        sell_pack_price = get_float(f'Sell Pack Price ({purchase_pack_price} -> {pack_profit})', True) or pack_profit
     item = {
         'serial-numbers': [serial_number],
         'name': name,
@@ -400,3 +405,107 @@ def add_new_invoice(cache: dict, supplier_invoice_number: int) -> dict:
         "supplier-invoice-number": supplier_invoice_number,
         "items": list(),
     }
+
+
+def get_invoice(cache: dict, purchases_path: Path) -> dict | None:
+    supplier_invoice_number = int(get_float("Supplier Invoice Number"))
+    if supplier_invoice_number in cache["supplier-invoice-numbers"]:
+        for invoice_path in purchases_path.iterdir():
+            if invoice_path.is_file():
+                _invoice = load_data(invoice_path)
+                if supplier_invoice_number == _invoice["supplier-invoice-number"]:
+                    return _invoice
+    return add_new_invoice(cache, supplier_invoice_number)
+
+
+def get_item(data: list[dict], cache: dict) -> tuple[dict | None, str]:
+    serial_number = int()
+    str_or_float = get_str_or_float("Name / Serial Number (*)", True)
+    if not str_or_float:
+        cache["last-barcode-number"] += 1
+        return add_new_item(data, cache["last-barcode-number"]), "create"
+    if type(str_or_float) is str:
+        items = get_items(data, name=str_or_float)
+        if type(items) is list and len(items) > 1:
+            items = [item["name"] for item in items]
+            items.sort()
+            pprint(items)
+            return None, str()
+    else:
+        items = get_items(data, str_or_float)
+        serial_number = int(str_or_float)
+    if type(items) is list and len(items) == 1:
+        return items[0], "get"
+    if serial_number:
+        return add_new_item(data, serial_number), "create"
+    return None, str()
+
+
+def merge_purchases_items() -> list[dict]:
+    # Collect items together
+    all_items = dict()
+    for invoice_path in Path("data/purchases").iterdir():
+        if invoice_path.is_file():
+            invoice = load_data(invoice_path)
+            for item in invoice['items']:
+                try:
+                    all_items[item["serial-numbers"][0]].append(item)
+                except KeyError:
+                    all_items[item["serial-numbers"][0]] = [item]
+
+    # Merge items together
+    _items = list()
+    for _, items in all_items.items():
+        if len(items) == 1:
+            _items.append(items[0])
+            continue
+
+        _item = {
+            "serial-numbers": list(),
+            "name": str(),
+            "pack": float(),
+            "imported-items": float(),
+            "imported-packs": float(),
+            "in-stock": float(),
+            "purchase-pack-price": float(),
+            "purchase-price": float(),
+            "sell-price": float(),
+            "sell-pack-price": float(),
+            "total-price": float(),
+            "stock-difference": float(),
+        }
+        imported_items, purchase_price, sell_price = int(), int(), int()
+        imported_packs, purchase_pack_price, sell_pack_price = int(), int(), int()
+        for item in items:
+            _item["name"] = item["name"]
+            _item["pack"] = item["pack"]
+            _item["serial-numbers"] = item["serial-numbers"]
+
+            imported_items += item["imported-items"]
+            purchase_price += item["purchase-price"] * item["imported-items"]
+            sell_price += item["sell-price"] * item["imported-items"]
+            _item["imported-items"] += item["imported-items"]
+            _item["purchase-price"] = normalize_price(purchase_price / imported_items, 0.25)
+            _item["sell-price"] = normalize_price(sell_price / imported_items, 0.25)
+
+            if item["pack"]:
+                imported_packs += item["imported-packs"]
+                purchase_pack_price += item["purchase-pack-price"] * item["imported-packs"]
+                sell_pack_price += item["sell-pack-price"] * item["imported-packs"]
+                _item["imported-packs"] += item["imported-packs"]
+                _item["purchase-pack-price"] = normalize_price(purchase_pack_price / imported_packs, 0.25)
+                _item["sell-pack-price"] = normalize_price(sell_pack_price / imported_packs, 0.25)
+            else:
+                _item["purchase-pack-price"], _item["sell-pack-price"], _item["imported-packs"] = 3*(None,)
+
+            _item["in-stock"] += item["in-stock"]
+            _item["stock-difference"] = _item["in-stock"] - _item["imported-items"]
+            _item["total-price"] = (
+                (item["purchase-pack-price"] * _item["imported-packs"])
+                if (_item["imported-packs"] and item["purchase-pack-price"])
+                else (item['purchase-price'] * _item["imported-items"])
+            )
+
+        _items.append(_item)
+
+    return _items
