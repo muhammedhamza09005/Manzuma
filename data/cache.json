@@ -1,5 +1,6 @@
 {
+    "last-supplier-number": 0,
     "last-purchase-inovace-number": 0,
     "last-barcode-number": 1998090059,
-    "supplier-invoice-numbers": []
+    "purchase-invoice-numbers": []
 }

@@ -1,0 +1,30 @@
+--- purchases ---
+Supplier Invoice Number: 1380
+Supplier Name: صـالــة المصبــاح للبقوليــات والتوابـل والمكسرات
+Inovace Date: 2026-04-28
+Name / Serial Number: 
+Item Name: فاصولياء
+Pack:
+Imported Items: 25
+In-Stock Items: 
+Purchase Price: 9.2
+Sell Price: 12
+Add/Remove a Serial Number?: 
+Add a new item?: 
+---
+Supplier Invoice Number: 1380
+Add a new item?: 1
+Name / Serial Number: فاصولياء
+Imported Items: 25
+In-Stock Items: 
+Add/Remove a Serial Number?: 
+Add a new item?: 
+---
+Supplier Invoice Number: 1380
+Add a new item?: 1
+Name / Serial Number: 1998090060
+Imported Items: -25
+In-Stock Items: 
+Add/Remove a Serial Number?: 
+Add a new item?: 
+---

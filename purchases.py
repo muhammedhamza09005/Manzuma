@@ -7,18 +7,18 @@ import functions as fs
 def purchases() -> dict | None:
     # init purchases
     fs.clear_terminal()
-    print(f"Loding purchases...")
+    print("Loding purchases...")
     items = fs.load_data()
     cache = fs.load_data(Path("data/cache.json"))
     purchases_path = Path("data/purchases")
     fs.clear_terminal()
-    print(f"--- Purchases ---\n")
+    print("--- Purchases ---\n")
 
     # get invoice
-    invoice = fs.get_invoice(cache, purchases_path)
-    if not invoice:
-        print('purchases error: not invoice')
-        return
+    while True:
+        invoice = fs.get_purchase_invoice(cache, purchases_path)
+        if invoice:
+            break
 
     # add invoice items
     while True:
@@ -29,7 +29,7 @@ def purchases() -> dict | None:
 
         # get item
         while True:
-            item, status = fs.get_item(items, cache)
+            item, status = fs.get_purchase_item(invoice, items, cache)
             if item:
                 break
 
@@ -43,40 +43,36 @@ def purchases() -> dict | None:
                     item_in_invoice = True
                     break
             if not item_in_invoice:
-                item = fs.update_item(items, item)
+                item = fs.update_purchase_item(items, item)
                 invoice['items'].append(item)
         else:
             invoice['items'].append(item)
 
     # Save items
     fs.clear_terminal()
-    print(f"Saving items...")
-    saved_all = True
-    if fs.dump_data(cache, Path("data/cache.json")):
-        print("cache -> OK")
-    else:
-        saved_all = False
-    if fs.dump_data(invoice, f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']}.json"):
-        print("invoice -> OK")
-    else:
-        saved_all = False
+    print("Saving items...")
+    errors = list()
+    if not fs.dump_data(cache, Path("data/cache.json")):
+        errors.append("cache")
+    invoice_path = f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']['shorted-supplier-name']}.json"
+    if not fs.dump_data(invoice, invoice_path):
+        errors.append("invoice")
     items = fs.merge_purchases_items()
-    if fs.dump_data(items):
-        print("items -> OK")
-    else:
-        saved_all = False
-    if fs.dump_stock_difference(items):
-        print("stock_difference -> OK")
-    else:
-        saved_all = False
-    if saved_all:
-        fs.clear_terminal()
+    if not fs.dump_data(items):
+        errors.append("items")
+    if not fs.dump_stock_difference(items):
+        errors.append("stock_difference")
+    if errors:
+        fs.get_str(f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
 
     return invoice
 
 
 if __name__ == "__main__":
     while True:
-        invoice = purchases()
-        if invoice:
-            pprint(invoice)
+        try:
+            invoice = purchases()
+            if invoice:
+                pprint(invoice)
+        except fs.ManzumaException:
+            continue

@@ -1,0 +1,17 @@
+# Done!
+/ delete items from purchase invoice by negative numbers; just like deleting a purchase invoice.
+/ make sure strings .,،<>:\"\'/\\|?*!@#$%&+^؟[]{}()~;`\\ can't be in a file name, replacing spaces with (_).
+
+# To do:
+- move functions.py to functions/functions.py  # coping __init__.py
+- move all purchase functions from functions.py to functions/purchase_functions.py
+- start working on customers just like suppliers.
+- start working on sales on sales.py:
+  - create sales_functions.py
+  - create sales forlder.
+  - auto create a forlder every day nameed ( datetime.date.today().isoformat() ).
+  - store each sales invoice in a seperate .json file inside today's forlder.
+  - each sales invoice includes the customer, creation date, invoice number, and sold items.
+  - defaults: customer: public, date: today.
+- work on profits.
+- create MANZUMA users with logings and permitions.

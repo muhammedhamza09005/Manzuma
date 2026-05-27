@@ -38,7 +38,7 @@ def save(data: list[dict]) -> list[dict]:
                 if temp_dict:
                     _dict = temp_dict
                 is_found = True
-                fs.add_new_serial_number(data, _dict)
+                fs.create_serial_number(data, _dict)
                 in_stock = fs.get_str_or_float('Add to In-Stock?', True)
                 if in_stock is None:
                     return data
@@ -76,7 +76,7 @@ def save(data: list[dict]) -> list[dict]:
             'stock-difference': in_stock - imported,
         }
         data.append(new_data)
-        if not fs.add_new_serial_number(data, new_data):
+        if not fs.create_serial_number(data, new_data):
             pprint(new_data)
         return data
 
