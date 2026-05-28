@@ -1,4 +1,4 @@
-import functions as fs
+import functions.functions as fs
 
 
 class CalculateProfit:

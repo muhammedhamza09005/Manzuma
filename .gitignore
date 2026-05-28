@@ -1,6 +1,8 @@
-/notes.txt
-/new_ipython_terminal.txt
-/new_terminal.txt
-/__pycache__
+/notes/notes.txt
+/notes/new_ipython_terminal.txt
+/notes/new_terminal.txt
+/notes/config_git.txt
+/notes/manual_testing.txt
+__pycache__
 /.vscode
-/config_git.txt
+/*.gitignore

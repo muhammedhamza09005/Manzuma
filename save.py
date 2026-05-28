@@ -1,6 +1,6 @@
 from pprint import pprint
 
-import functions as fs
+import functions.functions as fs
 
 
 class Save:
@@ -44,13 +44,13 @@ def save(data: list[dict]) -> list[dict]:
                     return data
                 if type(in_stock) is str and "=" in in_stock:
                     _in_stock = float(in_stock.split("=")[1])
-                    _dict['total-price'] = _dict['purchase-price'] * _in_stock
+                    _dict['total-purchase-price('] = _dict['purchase-price'] * _in_stock
                     _dict['stock-difference'] = _in_stock - _dict['imported']
                 else:
-                    _dict['total-price'] = _dict['purchase-price'] * (in_stock + _dict['in-stock'])
+                    _dict['total-purchase-price('] = _dict['purchase-price'] * (in_stock + _dict['in-stock'])
                     _dict['stock-difference'] = (in_stock + _dict['in-stock']) - _dict['imported']
                 if not in_stock:
-                    _dict['total-price'] = int()
+                    _dict['total-purchase-price('] = int()
                     _dict['in-stock'] = int()
                 elif type(in_stock) is str and "=" in in_stock:
                     _dict['in-stock'] = float(in_stock.split("=")[1])
@@ -72,7 +72,7 @@ def save(data: list[dict]) -> list[dict]:
             'name': name,
             'purchase-price': purchase_price,
             'sell-price': fs.get_float('Sell Price'),
-            'total-price': purchase_price * imported,
+            'total-purchase-price(': purchase_price * imported,
             'stock-difference': in_stock - imported,
         }
         data.append(new_data)

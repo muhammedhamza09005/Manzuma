@@ -1,22 +1,24 @@
 from pathlib import Path
 from pprint import pprint
+from typing import Any
 
-import functions as fs
+import functions.functions as fs
+import functions.purchase_functions as pfs
 
 
-def purchases() -> dict | None:
+def purchases() -> dict[str, Any]:
     # init purchases
     fs.clear_terminal()
     print("Loding purchases...")
     items = fs.load_data()
-    cache = fs.load_data(Path("data/cache.json"))
+    cache = fs.load_data(Path("data/cache/purchases.json"))
     purchases_path = Path("data/purchases")
     fs.clear_terminal()
     print("--- Purchases ---\n")
 
     # get invoice
     while True:
-        invoice = fs.get_purchase_invoice(cache, purchases_path)
+        invoice = pfs.get_invoice(cache, purchases_path)
         if invoice:
             break
 
@@ -29,7 +31,7 @@ def purchases() -> dict | None:
 
         # get item
         while True:
-            item, status = fs.get_purchase_item(invoice, items, cache)
+            item, status = pfs.get_item(invoice, items, cache)
             if item:
                 break
 
@@ -37,13 +39,13 @@ def purchases() -> dict | None:
             item_in_invoice = False
             for _item in invoice['items']:
                 if _item["serial-numbers"][0] in item["serial-numbers"]:
-                    item = fs.add_to_item(items, _item)
+                    item = pfs.add_to_item(items, _item)
                     invoice['items'].remove(_item)
                     invoice['items'].append(item)
                     item_in_invoice = True
                     break
             if not item_in_invoice:
-                item = fs.update_purchase_item(items, item)
+                item = pfs.update_item(items, item)
                 invoice['items'].append(item)
         else:
             invoice['items'].append(item)
@@ -52,15 +54,15 @@ def purchases() -> dict | None:
     fs.clear_terminal()
     print("Saving items...")
     errors = list()
-    if not fs.dump_data(cache, Path("data/cache.json")):
+    if not fs.dump_data(cache, Path("data/cache/purchases.json")):
         errors.append("cache")
     invoice_path = f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']['shorted-supplier-name']}.json"
     if not fs.dump_data(invoice, invoice_path):
         errors.append("invoice")
-    items = fs.merge_purchases_items()
+    items = pfs.merge_items()
     if not fs.dump_data(items):
         errors.append("items")
-    if not fs.dump_stock_difference(items):
+    if not pfs.dump_stock_difference(items):
         errors.append("stock_difference")
     if errors:
         fs.get_str(f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
@@ -71,8 +73,7 @@ def purchases() -> dict | None:
 if __name__ == "__main__":
     while True:
         try:
-            invoice = purchases()
-            if invoice:
-                pprint(invoice)
+            pprint(purchases())
+            fs.get_str("(continue)", True)
         except fs.ManzumaException:
             continue

@@ -1,6 +1,6 @@
 from pprint import pprint
 
-import functions as fs
+import functions.functions as fs
 
 
 def search() -> list[dict]:

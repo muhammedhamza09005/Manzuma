@@ -1,10 +1,10 @@
 # Done!
 / delete items from purchase invoice by negative numbers; just like deleting a purchase invoice.
 / make sure strings .,،<>:\"\'/\\|?*!@#$%&+^؟[]{}()~;`\\ can't be in a file name, replacing spaces with (_).
+/ move functions.py to functions/functions.py  # coping __init__.py
+/ move all purchase functions from functions.py to functions/purchase_functions.py
 
 # To do:
-- move functions.py to functions/functions.py  # coping __init__.py
-- move all purchase functions from functions.py to functions/purchase_functions.py
 - start working on customers just like suppliers.
 - start working on sales on sales.py:
   - create sales_functions.py
@@ -15,3 +15,8 @@
   - defaults: customer: public, date: today.
 - work on profits.
 - create MANZUMA users with logings and permitions.
+- start working on retured sales just like sales on retured_sales.py
+- convert form items.json to items/:
+  - store each item in a seperate .json file.
+  - when loading data, collect all items to a list[dict].
+  - only touch changed items when saving data.
