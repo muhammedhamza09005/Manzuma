@@ -265,7 +265,7 @@ def update_item(data: list[dict], item: dict) -> dict[str, Any]:
         "stock-difference": in_stock - imported,
     }
     _data = list()
-    for _dict in fs.load_data():
+    for _dict in merge_items():
         if _item["serial-numbers"][0] not in _dict["serial-numbers"]:
             _data.append(_dict)
     _data.append(_item)
@@ -279,9 +279,7 @@ def delete_item(invoice: dict, item: dict) -> None:
         invoice["items"].remove(item)
     path = Path(f"data/purchases/{invoice['invoice-number']}-{invoice['supplier']['shorted-supplier-name']}.json")
     fs.dump_data(invoice, path)
-    items = merge_items()
-    fs.dump_data(items)
-    dump_stock_difference(items)
+    dump_stock_difference(merge_items())
     fs.clear_terminal()
 
 
@@ -443,8 +441,6 @@ def delete_invoice(cache: dict, invoice_path: Path, invoice_number: int) -> None
     if os.path.exists(invoice_path) and invoice_path.is_file():
         os.remove(invoice_path)
     cache["invoice-numbers"].remove(invoice_number)
-    items = merge_items()
-    fs.dump_data(items)
-    dump_stock_difference(items)
+    dump_stock_difference(merge_items())
     fs.dump_data(cache, Path("data/cache/purchases.json"))
     fs.check_quit("00")

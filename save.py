@@ -1,11 +1,12 @@
 from pprint import pprint
 
 import functions.functions as fs
+import functions.purchase_functions as pfs
 
 
 class Save:
     def __init__(self):
-        self.data = fs.load_data()
+        self.data = pfs.merge_items()
         self.kill_process = True
 
     # Main function
@@ -83,6 +84,6 @@ def save(data: list[dict]) -> list[dict]:
 
 if __name__ == "__main__":
     while True:
-        data = fs.load_data()
+        data = pfs.merge_items()
         fs.dump_stock_difference(data)
         fs.dump_data(save(data))

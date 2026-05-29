@@ -4,13 +4,15 @@ from typing import Any
 
 import functions.functions as fs
 import functions.sales_functions as sfs
+import functions.purchase_functions as pfs
 
 
 def sales() -> dict[str, Any]:
     # init sales
     fs.clear_terminal()
     print("Loding sales...")
-    items = fs.load_data()
+    purchased_items = pfs.merge_items()
+    sold_items = sfs.merge_items()
     cache = fs.load_data(Path("data/cache/sales.json"))
     saless_path = Path("data/sales")
     fs.clear_terminal()
@@ -29,10 +31,11 @@ def sales() -> dict[str, Any]:
 
         # get item
         while True:
-            str_or_float = fs.get_str_or_float("Item Name/Serial Number (check-out)", True)
+            message = " (check-out)" if invoice["items"] else str()
+            str_or_float = fs.get_str_or_float(f"Item Name/Serial Number{message}", True if invoice["items"] else False)
             if not str_or_float:
                 return sfs.check_out(cache, invoice)
-            item = sfs.get_item(invoice, items, cache, str_or_float)
+            item = sfs.get_item(invoice, purchased_items, sold_items, str_or_float)
             if item:
                 break
 

@@ -153,12 +153,12 @@ def get_str_or_float(message: str = str(), allow_blink: bool = False) -> str | f
             return _input
 
 
-def load_data(file_path: Path = Path("data/items.json")):
+def load_data(file_path: Path):
     with open(file_path, "r", encoding="utf-8") as file_path:
         return json.load(file_path)
 
 
-def dump_data(data, file_path: Path = Path("data/items.json")) -> bool:
+def dump_data(data, file_path: Path) -> bool:
     if not Path(file_path).exists():
         Path(file_path).write_text(json.dumps({}, indent=4))
     with open(file_path, "w", encoding="utf-8") as f:
@@ -167,36 +167,36 @@ def dump_data(data, file_path: Path = Path("data/items.json")) -> bool:
     return False
 
 
-def get_items(data: list[dict], numbers: int | float = int, name: str = str()) -> list[dict]:
+def get_items(items: list[dict], number: int | float = int(), name: str = str()) -> list[dict]:
     ret_list = list()
-    if not data:
-        print("get_items error: not data")
+    if not items:
+        print("get_items error: not items")
         return ret_list
-    numbers_key = (
+    number_key = (
         "serial-numbers"
-        if "serial-numbers" in data[0] else
+        if "serial-numbers" in items[0] else
         "supplier-number"
-        if "supplier-number" in data[0] else
+        if "supplier-number" in items[0] else
         "customer-number"
-        if "customer-number" in data[0] else
+        if "customer-number" in items[0] else
         str()
     )
-    name_key = "item-name" if "item-name" in data[0] else "supplier-name" if "supplier-name" in data[0] else "customer-name" if "customer-name" in data[0] else str()
-    if not numbers_key:
-        print("get_items error: numbers_key KeyError")
+    name_key = "item-name" if "item-name" in items[0] else "supplier-name" if "supplier-name" in items[0] else "customer-name" if "customer-name" in items[0] else str()
+    if not number_key:
+        print("get_items error: number_key KeyError")
         return ret_list
     if not name_key:
         print("get_items error: name_key KeyError")
         return ret_list
     name = sanitized_and_desplited(name.lower().split())
-    for _dict in data:
-        dict_name = sanitized_and_desplited(_dict[name_key].lower().split())
-        if numbers and type(_dict[numbers_key]) is list and numbers in _dict[numbers_key]:
-            return [_dict]
-        if numbers and type(_dict[numbers_key]) in [int, float] and numbers == _dict[numbers_key]:
-            return [_dict]
-        if name and name in dict_name.split() or name == dict_name or name in dict_name:
-            ret_list.append(_dict)
+    for item in items:
+        item_name = sanitized_and_desplited(item[name_key].lower().split())
+        if number and type(item[number_key]) is list and number in item[number_key]:
+            return [item]
+        if number and type(item[number_key]) in [int, float] and number == item[number_key]:
+            return [item]
+        if name and ((name in item_name.split()) or (name == item_name) or (name in item_name)):
+            ret_list.append(item)
     return ret_list
 
 

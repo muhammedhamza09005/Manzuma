@@ -10,7 +10,7 @@ def purchases() -> dict[str, Any]:
     # init purchases
     fs.clear_terminal()
     print("Loding purchases...")
-    items = fs.load_data()
+    items = pfs.merge_items()
     cache = fs.load_data(Path("data/cache/purchases.json"))
     purchases_path = Path("data/purchases")
     fs.clear_terminal()
@@ -59,9 +59,6 @@ def purchases() -> dict[str, Any]:
     invoice_path = f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']['shorted-supplier-name']}.json"
     if not fs.dump_data(invoice, invoice_path):
         errors.append("invoice")
-    items = pfs.merge_items()
-    if not fs.dump_data(items):
-        errors.append("items")
     if not pfs.dump_stock_difference(items):
         errors.append("stock_difference")
     if errors:
