@@ -4,73 +4,90 @@ from typing import Any
 
 import functions.functions as fs
 import functions.purchase_functions as pfs
+from calculate_profit import CalculateProfit
 
 
-def purchases() -> dict[str, Any]:
-    # init purchases
-    fs.clear_terminal()
-    print("Loding purchases...")
-    items = pfs.merge_items()
-    cache = fs.load_data(Path("data/cache/purchases.json"))
-    purchases_path = Path("data/purchases")
-    fs.clear_terminal()
-    print("--- Purchases ---\n")
+class Purchases:
+    def __init__(self):
+        # Settings
+        self.settings = pfs.PurchasesSettings()
+        self.items = list()
+        self.cache = dict()
+        self.purchases_path = Path("data/purchases")
+        self.invoice = dict()
 
-    # get invoice
-    while True:
-        invoice = pfs.get_invoice(cache, purchases_path)
-        if invoice:
-            break
+    def init_purchases(self):
+        fs.clear_terminal()
+        print("Loding purchases...")
+        self.items = pfs.merge_items(self)
+        self.cache = fs.load_data(Path("data/cache/purchases.json"))
+        self.calculate_profit = CalculateProfit().main
+        fs.clear_terminal()
+        print("--- Purchases ---\n")
 
-    # add invoice items
-    while True:
-        if invoice['items']:
-            fs.clear_terminal()
-            if not fs.get_str_or_float("Add a new item? (no)", True):
-                break
+    def main(self) -> dict[str, Any]:
+        # init purchases
+        self.init_purchases()
 
-        # get item
+        # get invoice
         while True:
-            item, status = pfs.get_item(invoice, items, cache)
-            if item:
+            self.invoice = pfs.get_invoice(self)
+            if self.invoice:
                 break
 
-        if status == "get":
-            item_in_invoice = False
-            for _item in invoice['items']:
-                if _item["serial-numbers"][0] in item["serial-numbers"]:
-                    item = pfs.add_to_item(items, _item)
-                    invoice['items'].remove(_item)
-                    invoice['items'].append(item)
-                    item_in_invoice = True
+        self.invoice_path = Path(
+            f"{self.purchases_path}/{self.invoice['invoice-number']}-"
+            f"{self.invoice['supplier']['shorted-supplier-name']}.json"
+        )
+
+        # add invoice items
+        while True:
+            if self.invoice['items']:
+                fs.clear_terminal()
+                if not fs.get_str_or_float("Add a new item? (no)", True):
                     break
-            if not item_in_invoice:
-                item = pfs.update_item(items, item)
-                invoice['items'].append(item)
-        else:
-            invoice['items'].append(item)
 
-    # Save items
-    fs.clear_terminal()
-    print("Saving items...")
-    errors = list()
-    if not fs.dump_data(cache, Path("data/cache/purchases.json")):
-        errors.append("cache")
-    invoice_path = f"{purchases_path}/{invoice['invoice-number']}-{invoice['supplier']['shorted-supplier-name']}.json"
-    if not fs.dump_data(invoice, invoice_path):
-        errors.append("invoice")
-    if not pfs.dump_stock_difference(items):
-        errors.append("stock_difference")
-    if errors:
-        fs.get_str(f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
+            # get item
+            while True:
+                item, status = pfs.get_item(self)
+                if item:
+                    break
 
-    return invoice
+            if status == "get":
+                item_in_invoice = False
+                for _item in self.invoice['items']:
+                    if _item["serial-numbers"][0] in item["serial-numbers"]:
+                        item = pfs.add_to_item(self, _item)
+                        self.invoice['items'].remove(_item)
+                        self.invoice['items'].append(item)
+                        item_in_invoice = True
+                        break
+                if not item_in_invoice:
+                    item = pfs.update_item(self.items, item)
+                    self.invoice['items'].append(item)
+            else:
+                self.invoice['items'].append(item)
+
+        # Save items
+        fs.clear_terminal()
+        print("Saving items...")
+        errors = list()
+        if not fs.dump_data(self.cache, Path("data/cache/purchases.json")):
+            errors.append("cache")
+        if not fs.dump_data(self.invoice, self.invoice_path):
+            errors.append("invoice")
+        if not pfs.dump_stock_difference(self):
+            errors.append("stock_difference")
+        if errors:
+            fs.get_str(f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
+
+        return self.invoice
 
 
 if __name__ == "__main__":
     while True:
         try:
-            pprint(purchases())
+            pprint(Purchases().main())
             fs.get_str("(continue)", True)
         except fs.ManzumaException:
             continue

@@ -6,7 +6,7 @@ import functions.purchase_functions as pfs
 
 class Save:
     def __init__(self):
-        self.data = pfs.merge_items()
+        self.data = pfs.merge_items(self)
         self.kill_process = True
 
     # Main function

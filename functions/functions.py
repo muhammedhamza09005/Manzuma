@@ -3,16 +3,35 @@ import json
 import math
 import os
 import re
+from abc import ABC
 from pathlib import Path
 from typing import Any, Iterable
 
 
+class Settings(ABC):
+    def __init__(self):
+        self.profit = 10
+        self.divide = 0.25
+        super().__init__()
+
+
 class ManzumaException(Exception):
-    """Custom exception class with a message."""
+    """
+    * Custom exception class with a message.
+    """
 
     def __init__(self, message: str = str()):
         self.message = message
         super().__init__(self.message)
+
+
+def permisstion(self, name: str) -> bool:
+    try:
+        if self.user["permisstions"]["super-user"] or self.user["permisstions"][name]:
+            return True
+        return False
+    except KeyError:
+        return False
 
 
 def validate_date(_input: str) -> datetime.date | None:
@@ -58,38 +77,19 @@ def validate_date(_input: str) -> datetime.date | None:
         return None
 
 
-def normalize_price(price: float, divide: float) -> float:
+def normalize_price(self, price: float) -> float:
     """
     * Round price UP to the nearest divide step.
     :parm price: Price to be normalized.
     :parm divide: The point to which price to be normalized.
     """
-    if divide <= 0:
+    if self.settings.divide <= 0:
         raise ValueError("divide must be greater than 0")
 
-    normalized = math.ceil(price / divide) * divide
+    normalized = math.ceil(price / self.settings.divide) * self.settings.divide
 
     # Avoid floating-point artifacts like 3.50000000004
     return round(normalized, 10)
-
-
-_list = list()
-
-
-def notes(_input: float, value: float) -> None:
-    if _list:
-        if len(_list) <= 5:
-            print("History:")
-            for key, pair in _list:
-                print(f"{key} -> {pair:.2f}")
-        else:
-            print("History (last 5 calculations):")
-            for key, pair in _list[-5:]:
-                print(f"{key} -> {pair:.2f}")
-        print("\nResult:")
-    else:
-        print("Result:")
-    _list.append((_input, value))
 
 
 def clear_terminal():
@@ -174,14 +174,18 @@ def get_items(items: list[dict], number: int | float = int(), name: str = str())
         return ret_list
     number_key = (
         "serial-numbers"
-        if "serial-numbers" in items[0] else
-        "supplier-number"
-        if "supplier-number" in items[0] else
-        "customer-number"
-        if "customer-number" in items[0] else
-        str()
+        if "serial-numbers" in items[0]
+        else (
+            "supplier-number"
+            if "supplier-number" in items[0]
+            else "customer-number" if "customer-number" in items[0] else str()
+        )
     )
-    name_key = "item-name" if "item-name" in items[0] else "supplier-name" if "supplier-name" in items[0] else "customer-name" if "customer-name" in items[0] else str()
+    name_key = (
+        "item-name"
+        if "item-name" in items[0]
+        else "supplier-name" if "supplier-name" in items[0] else "customer-name" if "customer-name" in items[0] else str()
+    )
     if not number_key:
         print("get_items error: number_key KeyError")
         return ret_list

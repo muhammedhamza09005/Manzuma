@@ -11,10 +11,9 @@
   / store each sales invoice in a seperate .json file inside today's forlder.
   / each sales invoice includes the customer, creation date, invoice number, and sold items.
   / defaults: customer: public, date: today.
+/ convert to self.
 
 # To do:
-- convert to self.
-- purchase: auto create a forlder every day nameed ( datetime.date.today().isoformat() ) just like sales.
-- work on profits.
 - create MANZUMA users with logings and permitions.
+- work on profits.
 - start working on retured sales just like sales on retured_sales.py
