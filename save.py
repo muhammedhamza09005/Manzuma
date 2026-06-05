@@ -17,7 +17,7 @@ class Save:
 def save(data: list[dict]) -> list[dict]:
     temp_dict = None
     while True:
-        str_or_float = fs.get_str_or_float('Name / Serial Number')
+        str_or_float = fs.get_str_or_float(None, 'Name / Serial Number')
         fs.clear_terminal()
         if type(str_or_float) is str:
             _data = fs.get_items(data, name=str_or_float)
@@ -40,7 +40,7 @@ def save(data: list[dict]) -> list[dict]:
                     _dict = temp_dict
                 is_found = True
                 fs.create_serial_number(data, _dict)
-                in_stock = fs.get_str_or_float('Add to In-Stock?', True)
+                in_stock = fs.get_str_or_float(None, 'Add to In-Stock?', True)
                 if in_stock is None:
                     return data
                 if type(in_stock) is str and "=" in in_stock:
@@ -62,17 +62,17 @@ def save(data: list[dict]) -> list[dict]:
         except KeyError as e:
             print('Error', e)
     if not is_found:
-        name = fs.get_str('Name')
-        imported = fs.get_float('imported')
-        in_stock = fs.get_float('In-Stock')
-        purchase_price = fs.get_float('Purchase Price')
+        name = fs.get_str(None, 'Name')
+        imported = fs.get_float(None, 'imported')
+        in_stock = fs.get_float(None, 'In-Stock')
+        purchase_price = fs.get_float(None, 'Purchase Price')
         new_data = {
             'serial-numbers': [int(serial_number)],
             'imported': imported,
             'in-stock': in_stock,
             'name': name,
             'purchase-price': purchase_price,
-            'sell-price': fs.get_float('Sell Price'),
+            'sell-price': fs.get_float(None, 'Sell Price'),
             'total-purchase-price(': purchase_price * imported,
             'stock-difference': in_stock - imported,
         }

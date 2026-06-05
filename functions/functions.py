@@ -25,12 +25,17 @@ class ManzumaException(Exception):
         super().__init__(self.message)
 
 
-def permisstion(self, name: str) -> bool:
+def permisstion(self, name: str, raise_error: bool = True) -> bool:
+    e_message = f"You do not have a permisstion to {desplit(name.split('-'))}!"
     try:
-        if self.user["permisstions"]["super-user"] or self.user["permisstions"][name]:
+        if self.user["permissions"]["super-user"] or self.user["permissions"][name]:
             return True
+        if raise_error:
+            print(e_message)
         return False
     except KeyError:
+        if raise_error:
+            print(e_message)
         return False
 
 
@@ -97,21 +102,30 @@ def clear_terminal():
     os.system("cls" if os.name == "nt" else "clear")
 
 
-def check_quit(_input: str, kill_process: bool = True):
+def check_quit(self, _input: str, kill_process: bool = True, _clear_terminal: bool = True):
     if _input == "00":
-        clear_terminal()
+        if _clear_terminal:
+            clear_terminal()
         if kill_process:
             raise ManzumaException()
         return True
     if _input == "000":
-        clear_terminal()
+        if _clear_terminal:
+            clear_terminal()
+        if kill_process:
+            quit()
+        return True
+    if _input == "0000":
+        self.logout()
+        if _clear_terminal:
+            clear_terminal()
         if kill_process:
             quit()
         return True
     return False
 
 
-def get_float(message: str = str(), allow_blink: bool = False) -> float | None:
+def get_float(self, message: str = str(), allow_blink: bool = False) -> float | None:
     while True:
         try:
             _input = input(f"{message} >>> ").strip()
@@ -119,26 +133,26 @@ def get_float(message: str = str(), allow_blink: bool = False) -> float | None:
                 if allow_blink:
                     return
                 continue
-            if check_quit(_input):
+            if check_quit(self, _input):
                 return
             return float(_input)
         except ValueError:
             pass
 
 
-def get_str(message: str = str(), allow_blink: bool = False) -> str | None:
+def get_str(self, message: str = str(), allow_blink: bool = False) -> str | None:
     while True:
         _input = input(f"{message} >>> ").strip()
         if not _input:
             if allow_blink:
                 return
             continue
-        if check_quit(_input):
+        if check_quit(self, _input):
             return
         return _input
 
 
-def get_str_or_float(message: str = str(), allow_blink: bool = False) -> str | float | None:
+def get_str_or_float(self, message: str = str(), allow_blink: bool = False) -> str | float | None:
     while True:
         _input = input(f"{message} >>> ").strip()
         try:
@@ -146,7 +160,7 @@ def get_str_or_float(message: str = str(), allow_blink: bool = False) -> str | f
                 if allow_blink:
                     return
                 continue
-            if check_quit(_input):
+            if check_quit(self, _input):
                 return
             return float(_input)
         except ValueError:
@@ -283,3 +297,9 @@ def clean_file_name(name: list[str] | str) -> str:
                 mini_word += letter
         ret_name.append(mini_word)
     return desplit(ret_name, "_").lower()
+
+
+def merge_invoices(self, invoices_path: Path):
+    for invoice_path in invoices_path.iterdir():
+        if invoice_path.is_file():
+            self.invoices.append(load_data(invoice_path))

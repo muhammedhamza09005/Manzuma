@@ -12,8 +12,21 @@
   / each sales invoice includes the customer, creation date, invoice number, and sold items.
   / defaults: customer: public, date: today.
 / convert to self.
+/ create MANZUMA users with logings and permitions:
+  / involve login in every MANZUMA main function (purchases, sales, etc.).
 
 # To do:
-- create MANZUMA users with logings and permitions.
-- work on profits.
+- add self.user to purchase and sales invoices.
+- work on profits:
+  - when pricing an item, the more items the pack has, the less the profit percentage.
 - start working on retured sales just like sales on retured_sales.py
+- set the production and expire dates for a new item and updated item:
+  - substract the dates and reduce 10% from the substracted date as a final fresh date.
+  - for extra security, start another tracking for the actual expiration date using the given date.
+  - during items merging, if in-stock,
+    issue an expiration check warning when the final/actual date minus today is today or earlier.
+- create a purchase_consultation.py imported and working on purchase.py:
+  - inform if the newly purchased item's price is higher than the merged item'price, and otherwise.
+  - set an auto max limit for purchased items if the newly purchased item is expensive.
+  - set an auto minimum limit for purchased items if the newly purchased item is cheep.
+- start testing.

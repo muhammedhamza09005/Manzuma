@@ -14,7 +14,7 @@ class CalculateProfit:
             fs.clear_terminal()
         while True:
             if not purchase_price:
-                _input = fs.get_float("Price")
+                _input = fs.get_float(self, "Price")
                 fs.clear_terminal()
             else:
                 _input = purchase_price

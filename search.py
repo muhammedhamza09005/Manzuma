@@ -7,7 +7,7 @@ import functions.purchase_functions as pfs
 def search() -> list[dict]:
     while True:
         data = pfs.merge_items()
-        str_or_float = fs.get_str_or_float('Name / Serial Number')
+        str_or_float = fs.get_str_or_float(None, 'Name / Serial Number')
         fs.clear_terminal()
         if type(str_or_float) is str:
             _data = fs.get_items(data, name=str_or_float)

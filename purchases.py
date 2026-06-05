@@ -4,6 +4,7 @@ from typing import Any
 
 import functions.functions as fs
 import functions.purchase_functions as pfs
+import functions.sessions_functions as sfs
 from calculate_profit import CalculateProfit
 
 
@@ -15,13 +16,18 @@ class Purchases:
         self.cache = dict()
         self.purchases_path = Path("data/purchases")
         self.invoice = dict()
+        self.invoices = list()
+        self.user = dict()
+        self.logout = sfs.logout
 
     def init_purchases(self):
         fs.clear_terminal()
         print("Loding purchases...")
+        fs.merge_invoices(self, self.purchases_path)
         self.items = pfs.merge_items(self)
         self.cache = fs.load_data(Path("data/cache/purchases.json"))
         self.calculate_profit = CalculateProfit().main
+        sfs.login(self)
         fs.clear_terminal()
         print("--- Purchases ---\n")
 
@@ -39,12 +45,13 @@ class Purchases:
             f"{self.purchases_path}/{self.invoice['invoice-number']}-"
             f"{self.invoice['supplier']['shorted-supplier-name']}.json"
         )
+        self.invoice["invoice-path"] = str(self.invoice_path)
 
         # add invoice items
         while True:
             if self.invoice['items']:
                 fs.clear_terminal()
-                if not fs.get_str_or_float("Add a new item? (no)", True):
+                if not fs.get_str_or_float(self, "Add a new item? (no)", True):
                     break
 
             # get item
@@ -79,7 +86,7 @@ class Purchases:
         if not pfs.dump_stock_difference(self):
             errors.append("stock_difference")
         if errors:
-            fs.get_str(f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
+            fs.get_str(self, f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
 
         return self.invoice
 
@@ -88,6 +95,6 @@ if __name__ == "__main__":
     while True:
         try:
             pprint(Purchases().main())
-            fs.get_str("(continue)", True)
+            fs.get_str(None, "(continue)", True)
         except fs.ManzumaException:
             continue

@@ -13,9 +13,11 @@ class SalesSettings(fs.Settings):
 
 
 def sell_item(self, item: dict) -> dict | None:
+    if not fs.permisstion(self, "create-sales-item"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     sold_packs, _sold_items = float(), float()
     if item["pack"]:
-        str_or_float = fs.get_str_or_float("Sold Items:Packs")
+        str_or_float = fs.get_str_or_float(self, "Sold Items:Packs")
         if type(str_or_float) is str and ":" in str_or_float:
             sold = str_or_float.lower().split(":")
             if not sold:
@@ -29,7 +31,7 @@ def sell_item(self, item: dict) -> dict | None:
             return
         total_sold_price = (_sold_items * item["sell-price"]) + (sold_packs * item["sell-pack-price"])
     else:
-        _sold_items = float(fs.get_float("Sold Items"))
+        _sold_items = float(fs.get_float(self, "Sold Items"))
         total_sold_price = _sold_items * item["sell-price"]
     sold_item, left_items = fs.get_items(self.sold_items, item["serial-numbers"][0]), float()
     if sold_item:
@@ -70,7 +72,7 @@ def get_item(self, str_or_float: str | float) -> dict | None:
         found_items = fs.get_items(self.purchased_items, str_or_float)
     if type(found_items) is list and len(found_items) == 1:
         message = f"Are you sure you want to REMOVE item: {found_items[0]['item-name']}? (Yes)"
-        if is_delete and not fs.get_str(message, True):
+        if is_delete and fs.permisstion(self, "delete-sales-item") and not fs.get_str(self, message, True):
             return delete_item(self, found_items[0])
         return sell_item(self, found_items[0])
     pprint(found_items)
@@ -85,9 +87,11 @@ def delete_item(self, item: dict) -> None:
 
 
 def create_customer(self) -> dict[str, Any]:
+    if not fs.permisstion(self, "create-customer"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     customers = fs.load_data(Path("data/customers.json"))
     while True:
-        customer_name = str(fs.get_str("Customer Name"))
+        customer_name = str(fs.get_str(self, "Customer Name"))
         name_already_exists = False
         for customer in customers:
             if fs.sanitized_and_desplited(customer_name.lower()) == fs.sanitized_and_desplited(
@@ -107,7 +111,7 @@ def create_customer(self) -> dict[str, Any]:
             if customer_phone_numbers
             else "Customer Phone Number (no phone number)"
         )
-        customer_phone_number = fs.get_float(msg, True)
+        customer_phone_number = fs.get_float(self, msg, True)
         if not customer_phone_number:
             break
         customer_phone_numbers.append(customer_phone_number)
@@ -130,12 +134,14 @@ def get_customer(self) -> dict[str, Any]:
     customers = fs.load_data(Path("data/customers.json"))
     if not customers:
         return create_customer(self)
+    _permisstion = fs.permisstion(self, "create-customer", False)
+    message = "Customer Name/Number" + (" (new customer[n]/Public[ok]))" if _permisstion else " (Public)")
     while True:
-        str_or_float = fs.get_str_or_float("Customer Name/Number (new customer[n]/Public[ok])", True)
+        str_or_float = fs.get_str_or_float(self, message, True)
         if not str_or_float:
             return fs.get_items(customers, 1)[0]
         if type(str_or_float) is str:
-            if str_or_float.lower() == "n":
+            if str_or_float.lower() == "n" and _permisstion:
                 return create_customer(self)
             _customers = fs.get_items(customers, name=str_or_float)
         else:
@@ -146,15 +152,18 @@ def get_customer(self) -> dict[str, Any]:
 
 
 def create_invoice(self) -> dict[str, Any]:
+    if not fs.permisstion(self, "create-sales-invoice"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     customer = get_customer(self)
-    invoice_number = self.cache["last-inovace-number"] + 1
-    self.cache["last-inovace-number"] += 1
+    invoice_number = self.cache["last-invoice-number"] + 1
+    self.cache["last-invoice-number"] += 1
     self.cache["invoice-numbers"].append(invoice_number)
     today = datetime.date.today().isoformat()  # convert to ISO string
     return {
         "customer": customer,
-        "date": str(fs.validate_date(fs.get_str(f"Inovace Date ({today})", True)) or today),
+        "date": str(fs.validate_date(fs.get_str(self, f"Invoice Date ({today})", True)) or today),
         "invoice-number": invoice_number,
+        "invoice-path": str(),
         "total": float(),
         "items": list(),
     }
@@ -163,7 +172,9 @@ def create_invoice(self) -> dict[str, Any]:
 def get_invoice(self) -> dict | None:
     if not self.cache["invoice-numbers"]:
         return create_invoice(self)
-    invoice_number = fs.get_float("Invoice Number (new invoice)", True)
+    _permisstion = fs.permisstion(self, "create-sales-invoice", False)
+    message = "Invoice Number" + " (new invoice)" if _permisstion else str()
+    invoice_number = fs.get_float(self, message, _permisstion)
     if not invoice_number:
         return create_invoice(self)
     invoice_number = int(invoice_number)
@@ -171,22 +182,20 @@ def get_invoice(self) -> dict | None:
     if invoice_number < 0:
         invoice_number *= -1
         is_delete = True
-    invoice_path = str()
-    all_invoices = list()
-    invoices = list()
-    for sales_folders in self.sales_path.iterdir():
-        for invoice_path in sales_folders.iterdir():
-            if invoice_path.is_file():
-                invoice = fs.load_data(invoice_path)
-                all_invoices.append(invoice)
-                if invoice_number == invoice["invoice-number"]:
-                    invoices.append(invoice)
+    invoices = [invoice for invoice in self.invoices if invoice_number == invoice["invoice-number"]]
     if len(invoices) == 1:
-        if is_delete and not fs.get_str(f"Are you sure you want to DELETE sales invoice: {invoice_number}? (Yes)", True):
-            return delete_invoice(self, invoice_path, invoice_number)
+        if (
+            is_delete
+            and fs.permisstion(self, "delete-sales-invoice")
+            and not fs.get_str(self, f"Are you sure you want to DELETE sales invoice: {invoice_number}? (Yes)", True)
+        ):
+            return delete_invoice(self, Path(invoices[0]["invoice-path"]), invoice_number)
         return invoices[0]
     pprint(
-        [(invoice["invoice-number"], invoice["customer"]["shorted-customer-name"]) for invoice in (invoices or all_invoices)]
+        [
+            (invoice["invoice-number"], invoice["customer"]["shorted-customer-name"])
+            for invoice in (invoices or self.invoices)
+        ]
     )
 
 
@@ -195,7 +204,7 @@ def delete_invoice(self, invoice_path: Path, invoice_number: int) -> None:
         os.remove(invoice_path)
     self.cache["invoice-numbers"].remove(invoice_number)
     fs.dump_data(self.cache, Path("data/cache/sales.json"))
-    fs.check_quit("00")
+    fs.check_quit(self, "00")
 
 
 def merge_items(self) -> list[dict]:
@@ -245,7 +254,7 @@ def merge_items(self) -> list[dict]:
 
 def check_out(self) -> dict[str, Any]:
     while True:
-        paid_price = fs.get_float(f"Paid Price ({self.invoice['total']})", True)
+        paid_price = fs.get_float(self, f"Paid Price ({self.invoice['total']})", True)
         if paid_price is None:
             paid_price = self.invoice["total"]
         self.invoice["paid-price"] = paid_price
@@ -272,7 +281,7 @@ def check_out(self) -> dict[str, Any]:
     if not fs.dump_data(self.invoice, self.invoice_path):
         errors.append("invoice")
     if errors:
-        fs.get_str(f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
+        fs.get_str(self, f"{len(errors)} error(s) found: {fs.desplit(errors)} (continue)", True)
 
     fs.clear_terminal()
     print(f"Invoice Number: {self.invoice['invoice-number']}")
