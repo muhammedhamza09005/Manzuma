@@ -18,6 +18,7 @@ class Sales:
         self.sales_path = Path("data/sales")
         self.invoice = dict()
         self.invoices = list()
+        self.user = dict()
         self.logout = sefs.logout
 
     def init_sales(self):
@@ -81,8 +82,6 @@ class Sales:
                     break
             if not item_in_invoice:
                 self.invoice['items'].append(item)
-
-            self.invoice["total"] += item["total-sold-price"]
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ from typing import Any
 
 import functions.functions as fs
 import functions.purchase_functions as pfs
-import functions.sessions_functions as sfs
+import functions.sessions_functions as sefs
 from calculate_profit import CalculateProfit
 
 
@@ -18,7 +18,7 @@ class Purchases:
         self.invoice = dict()
         self.invoices = list()
         self.user = dict()
-        self.logout = sfs.logout
+        self.logout = sefs.logout
 
     def init_purchases(self):
         fs.clear_terminal()
@@ -27,7 +27,7 @@ class Purchases:
         self.items = pfs.merge_items(self)
         self.cache = fs.load_data(Path("data/cache/purchases.json"))
         self.calculate_profit = CalculateProfit().main
-        sfs.login(self)
+        sefs.login(self)
         fs.clear_terminal()
         print("--- Purchases ---\n")
 

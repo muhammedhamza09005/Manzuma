@@ -1,6 +1,6 @@
 # Done!
 / delete items from purchase invoice by negative numbers; just like deleting a purchase invoice.
-/ make sure strings .,،<>:\"\'/\\|?*!@#$%&+^؟[]{}()~;`\\ can't be in a file name, replacing spaces with (_).
+/ make sure strings .,،<>:\"\'/\\|?*!@#$%&+^؟[]{}()~;`\\ can not be in a file name, replacing spaces with (_).
 / move functions.py to functions/functions.py  # coping __init__.py
 / move all purchase functions from functions.py to functions/purchase_functions.py
 / start working on customers just like suppliers.
@@ -14,12 +14,15 @@
 / convert to self.
 / create MANZUMA users with logings and permitions:
   / involve login in every MANZUMA main function (purchases, sales, etc.).
+/ add self.user to purchase and sales invoices.
 
 # To do:
-- add self.user to purchase and sales invoices.
 - work on profits:
   - when pricing an item, the more items the pack has, the less the profit percentage.
+  - when pricing an item, the more expensive the item is, the less the profit percentage.
 - start working on retured sales just like sales on retured_sales.py
+- create addition_purchase_adjustments.py and substraction_purchase_adjustments.py:
+  - purchase_functions.merge_items must go through them.
 - set the production and expire dates for a new item and updated item:
   - substract the dates and reduce 10% from the substracted date as a final fresh date.
   - for extra security, start another tracking for the actual expiration date using the given date.
@@ -30,3 +33,12 @@
   - set an auto max limit for purchased items if the newly purchased item is expensive.
   - set an auto minimum limit for purchased items if the newly purchased item is cheep.
 - start testing.
+- work on monthly expenses: shop rent, salaries, electricity expenses, etc..
+- work on daily personal expenses: leftover money after gathering monthly expenses and capital.
+- create a virtual safe:
+  - gather monthly expenses and collect it each month.
+  - gather capital and collect it with each purchase invoice.
+- create a daily shop check-out:
+  - where the money in sales cashier must match all gathered money by MANZUMA.
+  - if the cashier money is more than gathered money, it must be added to capital.
+  - if the cashier money is less than gathered money, it must cutted from cashier worker's salary.

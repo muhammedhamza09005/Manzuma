@@ -39,11 +39,15 @@ def sell_item(self, item: dict) -> dict | None:
             sold_item[0]["sold-items"] + (sold_item[0]["sold-packs"] * (item["pack"] if item["pack"] else int()))
         )
         if left_items <= 0:
-            print(f"Can't sell! There's {left_items} left items!")
+            print(f"Can not sell! There's {left_items} left items!")
             return
     if (_sold_items + (sold_packs * (item["pack"] if item["pack"] else int()))) > item["in-stock"]:
-        print(f"Can't sell! The demand is greater than in-stocked items. Max is {left_items or item["in-stock"]}!")
+        print(f"Can not sell! The demand is greater than in-stocked items. Max is {left_items or item["in-stock"]}!")
         return
+    if item["pack"] is not None:
+        purchase_price = item["purchase-pack-price"] / item["pack"]
+    else:
+        purchase_price = item["purchase-price"]
     _item = {
         "serial-numbers": item["serial-numbers"],
         "item-name": item["item-name"],
@@ -53,6 +57,7 @@ def sell_item(self, item: dict) -> dict | None:
         "sold-items": _sold_items,
         "sold-packs": sold_packs,
         "total-sold-price": total_sold_price,
+        "total-profit": total_sold_price - purchase_price,
     }
     return _item
 
@@ -80,8 +85,14 @@ def get_item(self, str_or_float: str | float) -> dict | None:
 
 
 def delete_item(self, item: dict) -> None:
+    if not fs.permisstion(self, "delete-sales-item"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     if item in self.invoice["items"]:
         self.invoice["items"].remove(item)
+    self.invoice["total"], self.invoice["total-profit"] = float(), float()
+    for _item in self.invoice["items"]:
+        self.invoice["total"] += _item["total-sold-price"]
+        self.invoice["total-profit"] += _item["total-profit"]
     fs.dump_data(self.invoice, self.invoice_path)
     fs.clear_terminal()
 
@@ -161,10 +172,12 @@ def create_invoice(self) -> dict[str, Any]:
     today = datetime.date.today().isoformat()  # convert to ISO string
     return {
         "customer": customer,
+        "user": self.user,
         "date": str(fs.validate_date(fs.get_str(self, f"Invoice Date ({today})", True)) or today),
         "invoice-number": invoice_number,
         "invoice-path": str(),
         "total": float(),
+        "total-profit": float(),
         "items": list(),
     }
 
@@ -200,6 +213,8 @@ def get_invoice(self) -> dict | None:
 
 
 def delete_invoice(self, invoice_path: Path, invoice_number: int) -> None:
+    if not fs.permisstion(self, "delete-sales-invoice"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     if os.path.exists(invoice_path) and invoice_path.is_file():
         os.remove(invoice_path)
     self.cache["invoice-numbers"].remove(invoice_number)
@@ -253,6 +268,11 @@ def merge_items(self) -> list[dict]:
 
 
 def check_out(self) -> dict[str, Any]:
+    self.invoice["total"], self.invoice["total-profit"] = float(), float()
+    for item in self.invoice["items"]:
+        self.invoice["total"] += item["total-sold-price"]
+        self.invoice["total-profit"] += item["total-profit"]
+
     while True:
         paid_price = fs.get_float(self, f"Paid Price ({self.invoice['total']})", True)
         if paid_price is None:
@@ -260,7 +280,7 @@ def check_out(self) -> dict[str, Any]:
         self.invoice["paid-price"] = paid_price
         if paid_price < self.invoice['total']:
             if self.invoice["customer"]["customer-number"] == 1:
-                print(f"{self.invoice['customer']['customer-name']} can't loan money!")
+                print(f"{self.invoice['customer']['customer-name']} can not loan money!")
             else:
                 self.invoice["customer"]["customer-dept"] += self.invoice['total'] - paid_price
                 invoice_path = Path(

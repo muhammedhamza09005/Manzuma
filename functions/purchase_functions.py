@@ -293,6 +293,8 @@ def update_item(self, item: dict) -> dict[str, Any]:
 
 
 def delete_item(self, item: dict) -> None:
+    if not fs.permisstion(self, "delete-purchase-item"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     if item in self.invoice["items"]:
         self.invoice["items"].remove(item)
     fs.dump_data(self.invoice, self.invoice_path)
@@ -350,6 +352,7 @@ def create_invoice(self) -> dict[str, Any]:
     today = datetime.date.today().isoformat()  # convert to ISO string
     return {
         "supplier": supplier,
+        "user": self.user,
         "date": str(fs.validate_date(fs.get_str(self, f"Invoice Date ({today})", True)) or today),
         "invoice-number": invoice_number,
         "supplier-invoice-number": supplier_invoice_number,
@@ -459,6 +462,8 @@ def merge_items(self) -> list[dict]:
 
 
 def delete_invoice(self, invoice_path: Path, invoice_number: int) -> None:
+    if not fs.permisstion(self, "delete-purchase-invoice"):
+        fs.check_quit(self, "00", _clear_terminal=False)
     if os.path.exists(invoice_path) and invoice_path.is_file():
         os.remove(invoice_path)
     self.cache["invoice-numbers"].remove(invoice_number)

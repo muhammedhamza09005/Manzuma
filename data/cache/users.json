@@ -1,4 +1,6 @@
 {
-    "last-user-number": 0,
-    "user-numbers": []
+    "last-user-number": 1,
+    "user-numbers": [
+        1
+    ]
 }
